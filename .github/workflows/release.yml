@@ -2,18 +2,57 @@ name: Create release
 
 on:
   push:
+    branches:
+      - main
     tags:
       - "v*.*.*"
 
 permissions:
-  id-token: write # Required for OIDC
   contents: write
 
 jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      publish: ${{ steps.check.outputs.publish }}
+    steps:
+      - name: Get latest code
+        uses: actions/checkout@v4
+
+      - name: Resolve version
+        id: version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            version="$GITHUB_REF_NAME"
+          else
+            version="v$(grep -oP "^version\s+'\K[^']+" fxmanifest.lua)"
+          fi
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Resolved version: $version"
+
+      - name: Check for existing release
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if gh release view "$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            echo "Release $VERSION already exists, skipping."
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
   create-release:
-    if: github.actor_id != 278903378
+    needs: resolve
+    if: needs.resolve.outputs.publish == 'true'
     runs-on: ubuntu-latest
     steps:
+      - name: Get latest code
+        uses: actions/checkout@v4
+
       - name: Install zip
         run: sudo apt install zip
 
@@ -21,47 +60,6 @@ jobs:
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
-
-      - name: Generate GitHub App token
-        id: app_token
-        uses: tibdex/github-app-token@v2
-        with:
-          app_id: ${{ secrets.APP_ID }}
-          private_key: ${{ secrets.APP_PRIVATE_KEY }}
-
-      - name: Get latest code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: ${{ github.event.repository.default_branch }}
-          token: ${{ steps.app_token.outputs.token }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-
-      - name: Bump package version
-        run: bun run .github/actions/bump-package-version.js
-        env:
-          TGT_RELEASE_VERSION: ${{ github.ref_name }}
-
-      - name: Bump manifest version
-        run: bun run .github/actions/bump-manifest-version.js
-        env:
-          TGT_RELEASE_VERSION: ${{ github.ref_name }}
-
-      - name: Push version bump change
-        uses: EndBug/add-and-commit@v9
-        with:
-          add: '["fxmanifest.lua", "package/package.json"]'
-          push: true
-          default_author: github_actions
-          message: "chore: bump version to ${{ github.ref_name }}"
-
-      - name: Install package dependencies
-        run: bun install --frozen-lockfile
-        working-directory: package
 
       - name: Install web dependencies
         run: bun install --frozen-lockfile
@@ -79,18 +77,11 @@ jobs:
           cp -r ./web/build ./temp/ox_lib/web/
           cd ./temp && zip -r ../ox_lib.zip ./ox_lib
 
-      - name: Publish package to npm registry
-        run: npm publish --access public
-        working-directory: package
-
       - name: Create release
         uses: "marvinpinto/action-automatic-releases@v1.2.1"
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
+          automatic_release_tag: ${{ needs.resolve.outputs.version }}
           prerelease: false
+          title: ${{ needs.resolve.outputs.version }}
           files: ox_lib.zip
-
-      - name: Update tag
-        uses: EndBug/latest-tag@v1
-        with:
-          ref: ${{ github.ref_name }}
