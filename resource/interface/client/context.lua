@@ -8,6 +8,7 @@
 
 local contextMenus = {}
 local openContextMenu = nil
+local of_ui = GetResourceState('of_ui') == 'started'
 
 ---@class ContextMenuItem
 ---@field title? string
@@ -54,6 +55,8 @@ end
 
 ---@param id string
 function lib.showContext(id)
+    if of_ui then return exports.of_ui:showMenu(id) end
+
     if not contextMenus[id] then error('No context menu of such id found.') end
 
     local data = contextMenus[id]
@@ -74,6 +77,8 @@ end
 
 ---@param context ContextMenuProps | ContextMenuProps[]
 function lib.registerContext(context)
+    if of_ui then return exports.of_ui:registerMenu(context) end
+
     for k, v in pairs(context) do
         if type(k) == 'number' then
             contextMenus[v.id] = v
@@ -85,10 +90,18 @@ function lib.registerContext(context)
 end
 
 ---@return string?
-function lib.getOpenContextMenu() return openContextMenu end
+function lib.getOpenContextMenu()
+    if of_ui then return exports.of_ui:getOpenMenu() end
+
+    return openContextMenu
+end
 
 ---@param onExit boolean?
-function lib.hideContext(onExit) closeContext(nil, nil, onExit) end
+function lib.hideContext(onExit)
+    if of_ui then return exports.of_ui:hideMenu(onExit) end
+
+    closeContext(nil, nil, onExit)
+end
 
 RegisterNUICallback('openContext', function(data, cb)
     cb(1)

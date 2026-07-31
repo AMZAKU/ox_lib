@@ -6,6 +6,8 @@
     Copyright © 2025 Linden <https://github.com/thelindat>
 ]]
 
+local of_ui = GetResourceState('of_ui') == 'started'
+
 local progress
 local DisableControlAction = DisableControlAction
 local DisablePlayerFiring = DisablePlayerFiring
@@ -243,6 +245,8 @@ end
 ---@param data ProgressProps
 ---@return boolean?
 function lib.progressBar(data)
+    if of_ui then return exports.of_ui:progressBar(data) end
+
     while progress ~= nil do Wait(0) end
 
     if not interruptProgress(data) then
@@ -259,6 +263,8 @@ end
 ---@param data ProgressProps
 ---@return boolean?
 function lib.progressCircle(data)
+    if of_ui then return exports.of_ui:progressCircle(data) end
+
     while progress ~= nil do Wait(0) end
 
     if not interruptProgress(data) then
@@ -274,6 +280,8 @@ function lib.progressCircle(data)
 end
 
 function lib.cancelProgress()
+    if of_ui then return exports.of_ui:cancelProgress() end
+
     if not progress then
         error('No progress bar is active')
     end
@@ -283,6 +291,8 @@ end
 
 ---@return boolean
 function lib.progressActive()
+    if of_ui then return exports.of_ui:progressActive() end
+
     return progress and true
 end
 

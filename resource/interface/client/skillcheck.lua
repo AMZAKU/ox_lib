@@ -6,6 +6,8 @@
     Copyright © 2025 Linden <https://github.com/thelindat>
 ]]
 
+local of_ui = GetResourceState('of_ui') == 'started'
+
 ---@type promise?
 local skillcheck
 
@@ -15,6 +17,8 @@ local skillcheck
 ---@param inputs string[]?
 ---@return boolean?
 function lib.skillCheck(difficulty, inputs)
+    if of_ui then return exports.of_ui:skillCheck(difficulty, inputs) end
+
     if skillcheck then return end
     skillcheck = promise:new()
 
@@ -31,6 +35,8 @@ function lib.skillCheck(difficulty, inputs)
 end
 
 function lib.cancelSkillCheck()
+    if of_ui then return exports.of_ui:cancelSkillCheck() end
+
     if not skillcheck then
         error('No skillCheck is active')
     end
@@ -40,6 +46,8 @@ end
 
 ---@return boolean
 function lib.skillCheckActive()
+    if of_ui then return exports.of_ui:skillCheckActive() end
+
     return skillcheck ~= nil
 end
 

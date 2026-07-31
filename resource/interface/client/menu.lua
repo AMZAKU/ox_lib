@@ -6,6 +6,8 @@
     Copyright © 2025 Linden <https://github.com/thelindat>
 ]]
 
+local of_ui = GetResourceState('of_ui') == 'started'
+
 ---@type { [string]: MenuProps }
 local registeredMenus = {}
 ---@type MenuProps | nil
@@ -44,6 +46,8 @@ local openMenu
 ---@param data MenuProps
 ---@param cb? MenuChangeFunction
 function lib.registerMenu(data, cb)
+    if of_ui then return exports.of_ui:registerListMenu(data, cb) end
+
     if not data.id then error('No menu id was provided.') end
     if not data.title then error('No menu title was provided.') end
     if not data.options then error('No menu options were provided.') end
@@ -54,6 +58,8 @@ end
 ---@param id string
 ---@param startIndex? number
 function lib.showMenu(id, startIndex)
+    if of_ui then return exports.of_ui:showListMenu(id, startIndex) end
+
     local menu = registeredMenus[id]
     if not menu then
         error(('No menu with id %s was found'):format(id))
@@ -96,6 +102,8 @@ function lib.showMenu(id, startIndex)
 end
 ---@param onExit boolean?
 function lib.hideMenu(onExit)
+    if of_ui then return exports.of_ui:hideListMenu(onExit) end
+
     local menu = openMenu
     openMenu = nil
 
@@ -116,6 +124,8 @@ end
 ---@param options MenuOptions | MenuOptions[]
 ---@param index? number
 function lib.setMenuOptions(id, options, index)
+    if of_ui then return exports.of_ui:setListMenuOptions(id, options, index) end
+
     if index then
         registeredMenus[id].options[index] = options
     else
@@ -125,7 +135,11 @@ function lib.setMenuOptions(id, options, index)
 end
 
 ---@return string?
-function lib.getOpenMenu() return openMenu and openMenu.id end
+function lib.getOpenMenu()
+    if of_ui then return exports.of_ui:getOpenListMenu() end
+
+    return openMenu and openMenu.id
+end
 
 RegisterNUICallback('confirmSelected', function(data, cb)
     cb(1)

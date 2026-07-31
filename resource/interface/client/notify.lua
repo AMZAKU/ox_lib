@@ -26,11 +26,14 @@
 ---@field sound? { bank?: string, set: string, name: string }
 
 local settings = require 'resource.settings'
+local of_ui = GetResourceState('of_ui') == 'started'
 
 ---`client`
 ---@param data NotifyProps
 ---@diagnostic disable-next-line: duplicate-set-field
 function lib.notify(data)
+    if of_ui then return exports.of_ui:notify(data) end
+
     local sound = settings.notification_audio and data.sound
     local payload = table.clone(data)
     payload.sound = nil

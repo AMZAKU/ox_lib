@@ -24,6 +24,8 @@
 ---@field items RadialItem[]
 ---@field [string] any
 
+local of_ui = GetResourceState('of_ui') == 'started'
+
 local isOpen = false
 
 ---@type table<string, RadialMenuProps>
@@ -113,6 +115,8 @@ end
 ---Registers a radial sub menu with predefined options.
 ---@param radial RadialMenuProps
 function lib.registerRadial(radial)
+    if of_ui then return exports.of_ui:registerRadial(radial) end
+
     menus[radial.id] = radial
     radial.resource = GetInvokingResource()
 
@@ -122,10 +126,14 @@ function lib.registerRadial(radial)
 end
 
 function lib.getCurrentRadialId()
+    if of_ui then return exports.of_ui:getCurrentRadialId() end
+
     return currentRadial and currentRadial.id
 end
 
 function lib.hideRadial()
+    if of_ui then return exports.of_ui:hideRadial() end
+
     if not isOpen then return end
 
     SendNUIMessage({
@@ -144,6 +152,8 @@ end
 ---@param items RadialMenuItem | RadialMenuItem[]
 ---@param parentMenuId string? If provided, the item(s) will be added to the specified radial submenu instead of the global menu.
 function lib.addRadialItem(items, parentMenuId)
+    if of_ui then return exports.of_ui:addRadialItem(items, parentMenuId) end
+
     local targetMenu
     if parentMenuId then
         if not menus[parentMenuId] then
@@ -191,6 +201,8 @@ end
 ---@param id string
 ---@param parentMenuId string? If provided, the item will be removed from the specified radial submenu instead of the global menu.
 function lib.removeRadialItem(id, parentMenuId)
+    if of_ui then return exports.of_ui:removeRadialItem(id, parentMenuId) end
+
     local menuItem
     local targetMenu
     if parentMenuId then
@@ -219,6 +231,8 @@ end
 
 ---Removes all items from the global radial menu.
 function lib.clearRadialItems()
+    if of_ui then return exports.of_ui:clearRadialItems() end
+
     table.wipe(menuItems)
 
     if isOpen then
@@ -320,6 +334,8 @@ local isDisabled = false
 ---Disallow players from opening the radial menu.
 ---@param state boolean
 function lib.disableRadial(state)
+    if of_ui then return exports.of_ui:disableRadial(state) end
+
     isDisabled = state
 
     if isOpen and state then

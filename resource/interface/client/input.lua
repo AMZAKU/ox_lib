@@ -7,6 +7,7 @@
 ]]
 
 local input
+local of_ui = GetResourceState('of_ui') == 'started'
 
 ---@class InputDialogRowProps
 ---@field type 'input' | 'number' | 'checkbox' | 'select' | 'slider' | 'multi-select' | 'date' | 'date-range' | 'time' | 'textarea' | 'color'
@@ -42,6 +43,8 @@ local input
 ---@param options InputDialogOptionsProps[]?
 ---@return string[] | number[] | boolean[] | nil
 function lib.inputDialog(heading, rows, options)
+    if of_ui then return exports.of_ui:input(heading, rows, options) end
+
     if input then return end
     input = promise.new()
 
@@ -69,6 +72,8 @@ function lib.inputDialog(heading, rows, options)
 end
 
 function lib.closeInputDialog()
+    if of_ui then return exports.of_ui:closeInput() end
+
     if not input then return end
 
     lib.resetNuiFocus()
