@@ -348,6 +348,7 @@ lib.addKeybind({
     description = locale('open_radial_menu'),
     defaultKey = 'z',
     onPressed = function()
+        if of_ui then return ExecuteCommand('of_ui_radial') end
         if isDisabled then return end
 
         if isOpen then
